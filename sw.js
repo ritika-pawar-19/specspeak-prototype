@@ -1,6 +1,10 @@
 /* Offline cache for the SpecSpeak prototype: network first, cache as fallback. */
-const CACHE = 'specspeak-v1';
-const CORE = ['./', 'index.html', 'styles.css', 'chars.js', 'data.js', 'speech.js', 'app.js', 'manifest.webmanifest', 'icons/icon-192.png'];
+const CACHE = 'specspeak-v2';
+const WORDS = ['acer', 'aspire', 'processor', 'generation', 'ram', 'gigabyte', 'ssd', 'storage', 'display', 'warranty'];
+const AUDIO = WORDS.flatMap(w => ['assets/audio/' + w + '.mp3', 'assets/audio/' + w + '-slow.mp3'])
+  .concat(['correct', 'wrong', 'complete', 'silence'].map(n => 'assets/audio/' + n + '.mp3'));
+const CORE = ['./', 'index.html', 'styles.css', 'chars.js', 'data.js', 'speech.js', 'app.js', 'manifest.webmanifest',
+  'icons/icon-192.png', 'assets/video/unit1-poster.jpg'].concat(AUDIO);
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
