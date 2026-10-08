@@ -384,3 +384,4 @@ ol.list{list-style:none;margin:0}
 
 .toast.show{opacity:1}
 @media (prefers-reduced-motion:reduce){.screen,.screen.back,.tip,.art svg,.mic.live::after,.opt.bad,.sheet,.pop,.overlay,.overlay .panel{animation:none}.bar i,.toast{transition:none}}
+.course .lmsx{color:var(--ink2)}

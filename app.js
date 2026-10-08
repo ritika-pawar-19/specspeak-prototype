@@ -3,6 +3,8 @@
 (function () {
   'use strict';
   var D = window.SS, A = window.SSAudio, S = window.SSSpeech, CH = window.CH;
+  var L = window.SSLMS || { active: false, expected: false };   // SCORM LMS when launched from TrainGram's LMS
+  var inLMS = !!(L.active || L.expected);       // inside a SCORM package: progress never touches this phone's storage
   var app = document.getElementById('app');
   var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
@@ -59,7 +61,20 @@
       lessons: { meet: false, match: false, use: false }, said: {}, badge: false, practice: [],
       today: { date: '', lessons: 0, firstTry: 0 }, lessonsDone: 0, homeTip: false };
   }
+  function upgrade(s) {
+    var f = fresh();
+    if (!s || s.v !== 1) return f;
+    Object.keys(f).forEach(function (k) { if (s[k] === undefined || typeof s[k] !== typeof f[k]) s[k] = f[k]; });
+    return s;
+  }
   var st = (function () {
+    if (inLMS) {                          // in the LMS, progress belongs to the learner, never to this (maybe shared) phone
+      var s0 = upgrade(L.active ? L.load() : null);
+      var nm = L.active ? L.learnerName() : '';
+      if (nm) s0.name = nm.split(' ')[0];
+      s0.homeTip = true;
+      return s0;
+    }
     try {
       var s = JSON.parse(localStorage.getItem(KEY));
       if (s && s.v === 1) {
@@ -70,7 +85,17 @@
     } catch (e) {}
     return fresh();
   })();
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+  function save(important) {
+    if (inLMS) {
+      if (!L.active) return;
+      // the unit counts as complete the moment every step is done, even before "Claim your badge" is tapped
+      var earned = st.badge || unlocked('badge');
+      L.save({ state: st, stepsDone: earned ? STEPS.length : STEPS.filter(stepDone).length, stepsTotal: STEPS.length,
+        wordsClear: saidCount(), wordsTotal: D.WORDS.length, badge: earned, location: currentStep() || 'complete', important: !!important });
+      return;
+    }
+    try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {}
+  }
   /* local calendar day as a day number, so streaks never shift with time zones */
   function dayNum(d) { d = d || new Date(); return Math.round(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 86400000); }
   function parseDay(s) { var m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s || ''); return m ? dayNum(new Date(+m[1], +m[2] - 1, +m[3])) : null; }
@@ -218,7 +243,7 @@
       '<label class="flabel" for="sto">Your store (optional)</label>' +
       '<input class="field" id="sto" name="sto" placeholder="e.g. Store 14" maxlength="40" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="go" value="' + esc(st.store) + '">' +
       '<button class="btn navy" type="submit">' + (fromProfile ? 'Save' : 'Let’s go!') + '</button></form>' +
-      '<p class="note">Your progress is saved on this phone only.</p>', 'namescr');
+      '<p class="note">' + (inLMS ? 'Your progress is saved to your training record.' : 'Your progress is saved on this phone only.') + '</p>', 'namescr');
     var x = el.querySelector('[data-x]'); if (x) x.onclick = function () { profileTab(); };
     el.querySelector('form').addEventListener('submit', function (e) {
       e.preventDefault();
@@ -240,7 +265,13 @@
   var NODE_SUB = { read: 'TrainGram cards', watch: 'Training video', meet: 'New words', match: '&amp; listen', use: 'With customers', say: 'Checkpoint', badge: 'Unit 1' };
   var NODE_ICON = { read: 'book', watch: 'play', meet: 'star', match: 'star', use: 'star', say: 'mic', badge: 'trophy' };
 
+  function noLMS() {
+    mount('<div class="gb fin"><div class="cheer">' + CH('bolo_worried') + '</div><h1 class="fin-h" style="color:var(--ink)">' +
+      (L.ended ? 'This session has ended' : 'Can\u2019t reach your training record') + '</h1>' +
+      '<p class="fin-s">Close SpecSpeak and open it again from TrainGram, so your progress is saved.</p></div>', '');
+  }
   function home(back) {
+    if (inLMS && !L.active) return noLMS();
     if (!st.name) return welcome();
     leaveSub();
     var cur = currentStep(), done = STEPS.filter(stepDone).length, U = D.UNITS[0];
@@ -261,13 +292,14 @@
       return '<button class="unit locked ' + u.color + '" data-unit="' + u.n + '" aria-label="Unit ' + u.n + ', ' + u.name + ', ' + u.sub + ', locked"><div style="text-align:left"><small>Unit ' + u.n + ' · ' + u.name + '</small><b>' + u.sub + '</b></div>' + ic('lock') + '</button>';
     }).join('');
     var el = mount(
-      '<div class="status"><span class="course">' + CH('bolo') + ' SpecSpeak</span><span class="counts">' +
+      '<div class="status"><span class="course">' + (L.active ? '<button class="iconbtn lmsx" data-exit aria-label="Save and exit">' + ic('x') + '</button>' : '') + CH('bolo') + ' SpecSpeak</span><span class="counts">' +
       '<button class="c-fl" data-go="streak" aria-label="Streak: ' + streakNow() + ' days">' + CH('lau_mini') + streakNow() + '</button>' +
       '<button class="c-xp" data-go="streak" aria-label="' + st.xp + ' XP">' + ic('bolt') + st.xp + '</button></span></div>' +
       '<div class="scroll"><h1 class="unit"><span class="ut"><small>Unit 1</small><b>' + U.name + '</b></span><span class="pct" aria-label="' + done + ' of 7 steps done">' + done + ' / 7</span></h1>' +
       '<div class="trail">' + nodes + CH('chip', 'buddy') + CH('rami', 'buddy2') + '</div>' +
       '<div class="next-units">' + later + '</div></div>' + tabs('home'), '', back);
     bindTabs(el);
+    var ex = el.querySelector('[data-exit]'); if (ex) ex.onclick = askExit;
     el.querySelectorAll('[data-go="streak"]').forEach(function (b) { b.onclick = streakScreen; });
     el.querySelectorAll('[data-unit]').forEach(function (b) { b.onclick = function () { toast('Unit ' + b.getAttribute('data-unit') + ' opens after Unit 1 in the pilot.'); }; });
     el.querySelectorAll('[data-step]').forEach(function (b) {
@@ -391,7 +423,7 @@
       var first = !st.read;
       st.read = true;
       if (first) addXP(10);
-      save();
+      save(true);
       levelDone({ title: 'TrainGrams done!', sub: 'Level 1 · Read', xp: first ? 10 : 0 });
     }
     // tap the left third to go back, anywhere else to go on (the card itself stays scrollable)
@@ -405,6 +437,7 @@
   }
 
   /* ---------------- Level 2: video with locked seeking and pop quizzes ---------------- */
+  var vidFails = 0;   // repeated playback failures offer a trainer fallback so the unit can't get stuck
   function fmt(t) { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + ('0' + (t % 60)).slice(-2); }
   function video() {
     var V = D.VIDEO, answered = V.quizzes.map(function () { return !!st.watch; }), quizOpen = false;
@@ -416,7 +449,7 @@
       (st.watch ? '' : ic('lock', 'ic lock')) + '<span class="t1" aria-hidden="true">--:--</span></div>' +
       '<p class="vnote">' + (st.watch ? 'You’ve watched this once, so you can skip around.' : 'Skipping ahead unlocks after one full watch. Two quick questions will pause the video.') + '</p>', 'vid');
     var v = el.querySelector('video'), playBtn = el.querySelector('.vplay'), track = el.querySelector('.track');
-    var maxT = st.videoMax || 0;
+    var maxT = st.videoMax || 0, lastSavedMax = maxT;
     function dur() { return isFinite(v.duration) && v.duration > 0 ? v.duration : 0; }
     function drawMarks() {
       if (!dur()) return;
@@ -442,7 +475,10 @@
     v.addEventListener('pause', function () { if (!quizOpen) playBtn.hidden = false; st.videoMax = maxT; save(); });
     v.addEventListener('timeupdate', function () {
       if (!st.watch && v.currentTime > maxT + 1.5) { v.currentTime = maxT; return; }
-      if (v.currentTime > maxT) { maxT = v.currentTime; st.videoMax = maxT; }
+      if (v.currentTime > maxT) {
+        maxT = v.currentTime; st.videoMax = maxT;
+        if (maxT - lastSavedMax >= 5) { lastSavedMax = maxT; save(); }
+      }
       draw(); checkQuiz();
       if (dur() && maxT >= dur() - 0.6 && answered.every(Boolean) && !st.watch) markWatched(false);
     });
@@ -453,8 +489,12 @@
     window.addEventListener('pagehide', onHide);
     v.addEventListener('error', function () {
       if (el.querySelector('[data-retry]')) return;
-      el.insertAdjacentHTML('beforeend', '<div class="pop"><p class="q sm">The video didn’t load.</p><p style="font-family:var(--body);color:var(--ink2)">Check your connection and try again.</p><button class="btn" data-retry>Try again</button></div>');
+      vidFails++;
+      el.insertAdjacentHTML('beforeend', '<div class="pop"><p class="q sm">The video didn’t load.</p><p style="font-family:var(--body);color:var(--ink2)">Check your connection and try again.</p><button class="btn" data-retry>Try again</button>' +
+        (vidFails >= 2 ? '<button class="btn ghost" data-trainerwatch>Watched it with my trainer</button>' : '') + '</div>');
       el.querySelector('[data-retry]').onclick = function () { cleanup(); video(); };
+      var tw = el.querySelector('[data-trainerwatch]');
+      if (tw) tw.onclick = function () { try { L.active && L.interaction('video', true, '', 'trainer'); } catch (e) {} answered = answered.map(function () { return true; }); markWatched(true); };
     });
     playBtn.onclick = function () {
       try { el.querySelector('[data-x]').focus({ preventScroll: true }); } catch (e) {}
@@ -498,7 +538,7 @@
     function markWatched(atEnd) {
       if (marked) return; marked = true;
       var first = !st.watch;
-      st.watch = true; st.videoMax = maxT; if (first) addXP(10); save();
+      st.watch = true; st.videoMax = maxT; if (first) addXP(10); save(true);
       if (atEnd || first) { v.pause(); cleanup(); levelDone({ title: 'Video watched!', sub: 'Level 2 · Watch', xp: first ? 10 : 0 }); }
     }
     function cleanup() { window.removeEventListener('pagehide', onHide); try { v.pause(); } catch (e) {} st.videoMax = Math.max(st.videoMax || 0, maxT); save(); }
@@ -750,6 +790,7 @@
         }
         function resolve(status, heard) {
           lock();
+          try { L.active && L.interaction(w.slug, status === 'pass', heard, (trainerHere || S.mode() === 'trainer') ? 'trainer' : 'mic'); } catch (e) {}
           if (status === 'pass') {
             A.sfx('correct');
             var firstTry = tries === 0;
@@ -798,7 +839,7 @@
       addXP(xp); st.lessonsDone++; ensureToday(); st.today.lessons++;
       var grew = touchStreak();
       missedList.forEach(addPractice);
-      save();
+      save(true);
       A.sfx('complete');
       var acc = Math.round(total / (total + mistakes) * 100);
       lessonDone({ title: 'Lesson complete!', sub: 'Unit 1 · ' + def.title, xp: xp, acc: acc, time: secs, grew: grew, missed: missedList, first: first });
@@ -836,7 +877,7 @@
   }
   function sayDone(passed, failed, key) {
     sub(goHome);
-    ensureToday(); st.today.lessons++; var grew = touchStreak(); save();
+    ensureToday(); st.today.lessons++; var grew = touchStreak(); save(true);
     var all = saidCount() === D.WORDS.length, ready = all && !st.badge && unlocked('badge');
     A.sfx(all ? 'complete' : 'correct');
     var el = mount((passed.length ? confetti() : '') + '<div class="gb fin"><div class="cheer">' + CH(failed.length ? 'bolo' : 'bolo_cheer') + '</div>' +
@@ -855,7 +896,7 @@
     if (!st.badge && !unlocked('badge')) return home();
     sub(goHome);
     var first = !st.badge;
-    st.badge = true; if (first) addXP(50); save();
+    st.badge = true; if (first) addXP(50); save(true);
     A.sfx('complete');
     var el = mount(confetti() + '<div class="gb fin"><div class="badgebig">' + CH('bolo_cheer') + '</div><h1 class="fin-h" style="margin-top:.6em">Unit 1 complete!</h1>' +
       '<p class="fin-s">You can say all 10 basics clearly. That’s how an Acer expert sounds.</p>' +
@@ -863,6 +904,17 @@
       '</div><div class="gf" style="display:grid;gap:.7em"><button class="btn" data-home>Back to the map</button><button class="btn ghost" data-streak>See Lau grow</button></div>', '');
     continueHome(el);
     el.querySelector('[data-streak]').onclick = streakScreen;
+  }
+
+  /* ---------------- leaving the LMS session ---------------- */
+  function askExit() {
+    confirmBox({ char: 'bolo', title: 'Save and exit?', text: 'Your progress is saved to your training record. Come back any time to carry on.',
+      ok: 'Save and exit', okCls: '', cancel: 'Keep playing', onOk: exitNow });
+  }
+  function exitNow() {
+    save(true); L.exit();
+    mount('<div class="gb fin"><div class="cheer">' + CH('bolo_wave') + '</div><h1 class="fin-h">Progress saved</h1>' +
+      '<p class="fin-s">' + (framed ? 'Close this lesson with TrainGram\u2019s close button.' : 'You can close this window now.') + ' See you next time, ' + esc(st.name || 'friend') + '!</p></div>', '');
   }
 
   /* ---------------- tabs: practice, league, profile ---------------- */
@@ -901,14 +953,18 @@
       '<div class="card"><h2 class="h3">Speech check</h2><p>' + (auto ? 'This phone checks each word with speech recognition set to Indian English. It confirms a customer would understand the word; accents are fine.' : esc(S.why()) + ' Words can still be passed with a trainer check.') + '</p></div>' +
       '<div class="card"><button class="toggle" role="switch" aria-checked="' + S.trainerForced + '" data-trainer><span><b>Trainer check</b><br><small style="color:var(--ink2);font-family:var(--body)">A trainer marks words instead of the microphone.</small></span><span class="sw" aria-hidden="true"></span></button></div>' +
       '<div class="card"><button class="toggle" role="switch" aria-checked="' + !A.muted + '" data-sound><span><b>Sound effects</b></span><span class="sw" aria-hidden="true"></span></button></div>' +
-      '<div class="card"><h2 class="h3">About this prototype</h2><p>SpecSpeak prototype for Acer APC training, by Channelplay. Unit 1 is playable; Units 2–4 open in the pilot. Progress is saved on this phone only.</p></div>' +
-      '<button class="btn ghost" data-edit>Change name or store</button><button class="btn ghost" data-reset style="color:var(--coral-ink)">Reset progress</button>' +
+      '<div class="card"><h2 class="h3">About this prototype</h2><p>SpecSpeak prototype for Acer APC training, by Channelplay. Unit 1 is playable; Units 2–4 open in the pilot. ' +
+      (L.active ? 'Progress is saved to your training record.' : 'Progress is saved on this phone only.') + '</p></div>' +
+      (L.active ? '<button class="btn" data-exit>Save and exit</button>' : '') +
+      (!L.active || !L.learnerName() ? '<button class="btn ghost" data-edit>Change name or store</button>' : '') +
+      (inLMS ? '' : '<button class="btn ghost" data-reset style="color:var(--coral-ink)">Reset progress</button>') +
       '</div></div>' + tabs('profile'), '');
     bindTabs(el);
     el.querySelector('[data-trainer]').onclick = function () { S.setTrainer(!S.trainerForced); profileTab(); };
     el.querySelector('[data-sound]').onclick = function () { A.setMuted(!A.muted); profileTab(); };
-    el.querySelector('[data-edit]').onclick = function () { nameScreen(true); };
-    el.querySelector('[data-reset]').onclick = function () {
+    var ed = el.querySelector('[data-edit]'); if (ed) ed.onclick = function () { nameScreen(true); };
+    var ex2 = el.querySelector('[data-exit]'); if (ex2) ex2.onclick = askExit;
+    var rs = el.querySelector('[data-reset]'); if (rs) rs.onclick = function () {
       confirmBox({ title: 'Reset all progress?', text: 'XP, streak and every level go back to the start. This can’t be undone.', ok: 'Reset', cancel: 'Cancel',
         onOk: function () { var n = st.name, s = st.store; st = fresh(); st.name = n; st.store = s; st.homeTip = true; save(); home(); toast('Progress reset.'); } });
     };
@@ -916,7 +972,11 @@
 
   /* ---------------- start ---------------- */
   document.addEventListener('touchstart', function () {}, { passive: true });   // lets :active press states show on iPhone
-  if ('serviceWorker' in navigator && location.protocol === 'https:' && !framed) {
+  if (L.active) {
+    L.onBeforeFinish(function () { save(true); });
+    if (L.loadFailed) setTimeout(function () { toast('Your saved progress couldn\u2019t be read. Your training record has not been changed.'); }, 800);
+  }
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && !framed && !L.active && /github\.io$/.test(location.hostname)) {
     window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
   }
   home();

@@ -76,8 +76,10 @@
 
   /* ---------- speech check ---------- */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var forcedTrainer = false;
-  try { forcedTrainer = localStorage.getItem('specspeak.trainer') === '1'; } catch (e) {}
+  var inLMS = !!(window.SSLMS && (window.SSLMS.active || window.SSLMS.expected));
+  var forcedTrainer = false, hardFails = 0;
+  // on a shared store phone in the LMS, a trainer switch must not carry over to the next learner
+  if (!inLMS) { try { forcedTrainer = localStorage.getItem('specspeak.trainer') === '1'; } catch (e) {} }
   var denied = '';          // error code that blocked speech for this page load
   var active = null;        // the running recognizer, so a quit can abort it
 
@@ -99,19 +101,24 @@
   var Speech = {
     /* 'auto' when the phone can check speech itself, otherwise 'trainer' */
     mode: function () {
-      if (forcedTrainer || denied || framed) return 'trainer';
+      // a framed page with no LMS is the claude.ai preview (no microphone); inside an LMS frame, try the mic
+      if (forcedTrainer || denied || (framed && !inLMS)) return 'trainer';
       return (SR && window.isSecureContext) ? 'auto' : 'trainer';
     },
     why: function () {
       if (forcedTrainer) return 'Trainer check is switched on in Profile.';
-      if (framed) return 'The microphone can’t be used inside this preview page. Open the SpecSpeak web link on your phone for the live speech check.';
+      if (inLMS && (denied || !SR || !window.isSecureContext)) return denied === 'unavailable' ?
+        'Speech check isn\u2019t working on this connection. Your trainer can check your words.' :
+        'The microphone isn\u2019t available in this training window. Your trainer can check your words.';
+      if (denied === 'unavailable') return 'Speech check isn\u2019t working on this connection. Your trainer can check your words.';
+      if (framed && !inLMS) return 'The microphone can’t be used inside this preview page. Open the SpecSpeak web link on your phone for the live speech check.';
       if (denied === 'service-not-allowed' || (denied && isIOS)) return 'Speech check is off on this phone. ' + DICTATION;
       if (denied) return 'The microphone is blocked for this page. Allow it in the browser’s site settings, then reload.';
       if (!window.isSecureContext) return 'Speech check needs a secure (https) link.';
       if (!SR) return 'This browser can’t check speech. Use Chrome on Android or Safari on iPhone.';
       return '';
     },
-    setTrainer: function (on) { forcedTrainer = !!on; try { localStorage.setItem('specspeak.trainer', on ? '1' : '0'); } catch (e) {} },
+    setTrainer: function (on) { forcedTrainer = !!on; if (!inLMS) { try { localStorage.setItem('specspeak.trainer', on ? '1' : '0'); } catch (e) {} } },
     get trainerForced() { return forcedTrainer; },
     get isIOS() { return isIOS; },
     matches: matches,
@@ -153,6 +160,7 @@
           var alts = [];
           for (var i = 0; i < e.results.length; i++)
             for (var j = 0; j < e.results[i].length; j++) alts.push(e.results[i][j].transcript);
+          hardFails = 0;
           finish({ status: matches(alts, w.accept) ? 'pass' : 'miss', heard: (alts[0] || '').trim() });
         };
         rec.onerror = function (e) {
@@ -160,11 +168,12 @@
           if (code === 'no-speech' || code === 'aborted') return finish({ status: 'nospeech', heard: '' });
           if (code === 'audio-capture') return finish({ status: 'busy', heard: '' });
           if (code === 'not-allowed' || code === 'service-not-allowed') { denied = code; return finish({ status: 'denied', heard: '', code: code }); }
-          if (code === 'network') return finish({ status: 'network', heard: '' });
+          if (code === 'network') { if (++hardFails >= 2) denied = 'unavailable'; return finish({ status: 'network', heard: '' }); }
+          if (++hardFails >= 2) denied = 'unavailable';
           finish({ status: 'error', heard: '', code: code });
         };
         rec.onend = function () { setTimeout(function () { if (!gotResult) finish({ status: 'nospeech', heard: '' }); }, 300); };
-        startGuard = setTimeout(function () { finish({ status: 'error', heard: '' }); }, 15000);
+        startGuard = setTimeout(function () { if (++hardFails >= 2) denied = 'unavailable'; finish({ status: 'error', heard: '' }); }, 15000);
         try { rec.start(); } catch (e) { finish({ status: 'error', heard: '' }); }
       });
     }
