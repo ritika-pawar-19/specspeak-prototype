@@ -1,0 +1,3 @@
+# brand-studio validator sidecars (local only; captions are not shown in the app)
+assets/video/*.srt
+assets/video/*.timeline.json

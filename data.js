@@ -41,12 +41,12 @@
     { eb: 'WHAT TO REMEMBER', recap: [['Processor', 'the brain'], ['Gen', 'how new'], ['RAM', 'apps at once'], ['SSD', 'speed'], ['Storage', 'space'], ['Display', 'corner to corner'], ['Warranty', 'peace of mind']] }
   ];
 
-  /* Level 2 — video. Quiz times are the end of the "ram" and "warranty" scenes. */
+  /* Level 2 — video. Quiz at the end of the "ram" and "warranty" scenes (video-src/timeline.json end); replay from vo_start, when the slide is fully on. */
   var VIDEO = {
     src: 'assets/video/unit1-basics.mp4', poster: 'assets/video/unit1-poster.jpg',
     quizzes: [
-      { at: 29.95, replayFrom: 22.6, q: 'More RAM lets you…', opts: ['Keep more apps open at once', 'Charge the battery faster'], a: 0 },
-      { at: 50.48, replayFrom: 43.1, q: 'What does a warranty mean?', opts: ['Acer fixes manufacturing faults for a set period', 'A faster processor'], a: 0 }
+      { at: 34.78, replayFrom: 26.87, q: 'More RAM lets you…', opts: ['Keep more apps open at once', 'Charge the battery faster'], a: 0 },
+      { at: 57.71, replayFrom: 50.4, q: 'What does a warranty mean?', opts: ['Acer fixes manufacturing faults for a set period', 'A faster processor'], a: 0 }
     ]
   };
 

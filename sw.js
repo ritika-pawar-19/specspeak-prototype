@@ -1,5 +1,5 @@
 /* Offline cache for the SpecSpeak prototype: network first, cache as fallback. */
-const CACHE = 'specspeak-v2';
+const CACHE = 'specspeak-v3';
 const WORDS = ['acer', 'aspire', 'processor', 'generation', 'ram', 'gigabyte', 'ssd', 'storage', 'display', 'warranty'];
 const AUDIO = WORDS.flatMap(w => ['assets/audio/' + w + '.mp3', 'assets/audio/' + w + '-slow.mp3'])
   .concat(['correct', 'wrong', 'complete', 'silence'].map(n => 'assets/audio/' + n + '.mp3'));
