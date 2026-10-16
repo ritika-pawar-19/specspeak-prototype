@@ -1,0 +1,174 @@
+/* Play & Learn: home pill, Practice card, hub, sheets, game screen, Say-it checkpoint and end card.
+   Uses the app's tokens (styles.css :root). Every class is prefixed arc- so nothing leaks into the lessons. */
+.arc-spr{display:block;image-rendering:pixelated;image-rendering:crisp-edges;flex:none}
+.arc-live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- home pill (small, bottom-right, just above the tabs) ---------- */
+.arc-pillwrap{position:relative;height:0;z-index:3}
+.arc-haspill .scroll{padding-bottom:3.4em}
+.arc-pill{position:absolute;right:.8em;bottom:.7em;display:flex;align-items:center}
+.arc-pill-go{display:flex;align-items:center;gap:.4em;padding:.38em .9em .38em .5em;border-radius:2em;background:var(--ink);color:var(--lime);
+  font-weight:800;font-size:.8em;letter-spacing:.01em;box-shadow:0 .25em 0 #000526,0 .6em 1.2em -.5em rgba(11,18,64,.45);min-height:40px}
+.arc-pill-go:active{transform:translateY(.15em);box-shadow:0 .1em 0 #000526}
+.arc-pill-lau{display:block;margin:-.35em 0 -.2em}
+.arc-pill-t{white-space:nowrap}
+.arc-pill-x{position:absolute;top:-.8em;right:-.45em;width:1.55em;height:1.55em;border-radius:50%;background:#fff;color:var(--ink2);
+  display:grid;place-items:center;box-shadow:0 0 0 .12em var(--line2)}
+.arc-pill-x::before{content:"";position:absolute;inset:-.55em}          /* bigger tap area than it looks */
+.arc-pill-x svg{width:.8em;height:.8em}
+.arc-pill.wig{animation:arcwig .9s ease-in-out .9s 1 both}
+@keyframes arcwig{0%,100%{transform:none}15%{transform:rotate(-7deg) scale(1.06)}30%{transform:rotate(6deg) scale(1.06)}45%{transform:rotate(-4deg)}60%{transform:rotate(3deg)}75%{transform:rotate(-1deg)}}
+
+/* ---------- Practice tab card ---------- */
+.arc-pcard{display:flex;align-items:center;gap:.75em;margin:.5em 1.15em .2em;padding:.7em .9em;width:calc(100% - 2.3em);border-radius:1.1em;
+  background:var(--lime);color:var(--ink);box-shadow:0 .28em 0 var(--lime-dk);text-align:left}
+.arc-pcard:active{transform:translateY(.15em);box-shadow:0 .12em 0 var(--lime-dk)}
+.arc-pcard-art{display:block;margin:-.6em 0 -.3em}
+.arc-pcard-t{flex:1;min-width:0}
+.arc-pcard-t b{display:block;font-weight:800;font-size:1.1em}
+.arc-pcard-t small{display:block;font-weight:600;font-size:.82em;color:var(--lime-ink)}
+.arc-chip{display:inline-flex;align-items:center;gap:.3em;padding:.3em .7em .3em .45em;border-radius:1em;background:#fff;color:var(--ink);font-weight:800;font-size:.9em;flex:none}
+
+/* ---------- hub (games menu): looks like the videos' outro ---------- */
+.screen.arc-hub{background:var(--cream)}
+.arc-hd{position:relative;flex:none;background:var(--lime);padding:calc(var(--safe-t) + 3.4em) 1.3em 1.3em;border-radius:0 0 1.6em 1.6em;overflow:hidden}
+.arc-hd h1{font-size:2em;font-weight:800;letter-spacing:-.015em;line-height:1.05}
+.arc-hd p{margin-top:.25em;font-family:var(--body);font-weight:700;color:#3A5200;font-size:1.05em}
+.arc-hd-lau{position:absolute;right:1.4em;bottom:.9em}
+.arc-hd-lau .bob{animation:arcbob 1.6s ease-in-out infinite}
+@keyframes arcbob{50%{transform:translateY(-.25em)}}
+.arc-back{position:absolute;left:.5em;top:calc(var(--safe-t) + .45em);width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--ink)}
+.arc-back svg{width:1.4em;height:1.4em}
+.arc-back:active{background:rgba(255,255,255,.4)}
+.arc-hd .arc-chip{position:absolute;right:1em;top:calc(var(--safe-t) + .75em)}
+.arc-hub-scroll{padding-bottom:calc(var(--safe-b) + 1em)}
+.arc-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75em;padding:1.1em 1em .4em}
+.arc-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:.15em;min-height:10.6em;padding:.8em .5em .8em;
+  border-radius:1.4em;background:#fff;box-shadow:inset 0 0 0 .2em var(--ink),0 .3em 0 rgba(11,18,64,.12);text-align:center}
+.arc-tile:active{transform:translateY(.15em)}
+.arc-tile-art{flex:1;display:grid;place-items:center;min-height:4.6em}
+.arc-tile b{font-size:1.08em;font-weight:800;line-height:1.1}
+.arc-tile small{font-family:var(--body);font-size:.78em;font-weight:600;color:var(--ink2)}
+.arc-tag{margin-top:.35em;padding:.25em .7em;border-radius:1em;font-size:.72em;font-weight:800;letter-spacing:.02em}
+.arc-tag.best{background:var(--ink);color:var(--lime)}
+.arc-tag.new{background:var(--lime);color:var(--ink)}
+.arc-tag.soon{background:var(--track);color:#8A826B}
+.arc-tile.soon{box-shadow:inset 0 0 0 .2em var(--line2),0 .3em 0 rgba(11,18,64,.06)}
+.arc-tile.soon .arc-tile-art{opacity:.45;filter:grayscale(.6)}
+.arc-tile.soon b{color:#8A826B}
+.arc-note{margin:.6em 1.3em 0;font-family:var(--body);font-size:.8em;color:var(--mute);text-align:center}
+
+/* ---------- sheets (intro, pause, say, end) ---------- */
+.arc-sheet{position:absolute;inset:0;z-index:12;display:flex;align-items:flex-end;background:rgba(11,18,64,.4);animation:fade .2s ease both;pointer-events:auto}
+.arc-sheet.dim{background:rgba(11,18,64,.55)}
+.arc-sheet-card{position:relative;width:100%;background:var(--paper);border-radius:1.6em 1.6em 0 0;padding:1.3em 1.2em calc(var(--safe-b) + 1.2em);
+  display:grid;gap:.85em;animation:up .25s ease both}
+.arc-x{position:absolute;right:.5em;top:.5em;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--mute)}
+.arc-x svg{width:1.2em;height:1.2em}
+.arc-intro-hd{display:flex;align-items:center;gap:1em;padding-right:2.4em}
+.arc-intro-art{flex:none;display:grid;place-items:center;width:5.2em;height:5.2em;border-radius:1.2em;background:var(--lime-soft);box-shadow:inset 0 0 0 .16em var(--ink)}
+.arc-num{display:inline-block;padding:.15em .55em;border-radius:1em;background:var(--ink);color:var(--lime);font-weight:800;font-size:.75em}
+.arc-intro-hd h2{font-size:1.5em;font-weight:800;margin-top:.15em;line-height:1.1}
+.arc-intro-hd p{font-family:var(--body);color:var(--ink2);font-weight:600;font-size:.9em}
+.arc-rules{list-style:none;margin:0;padding:0;display:grid;gap:.5em}
+.arc-rules li{display:flex;align-items:center;gap:.7em;font-weight:700;font-size:.98em;line-height:1.25}
+.arc-rules li span{flex:none;width:1.9em;height:1.9em;border-radius:50%;display:grid;place-items:center;background:var(--lime);box-shadow:inset 0 0 0 .14em var(--ink);font-weight:800;font-size:.9em}
+.arc-sheet .btn svg{width:1.2em;height:1.2em}
+.arc-pausecard{justify-items:stretch;text-align:center}
+.arc-pausecard h2{font-size:1.5em;font-weight:800}
+.arc-pausecard p{font-family:var(--body);color:var(--ink2)}
+.arc-quitbtn{color:var(--coral-ink)}
+
+/* ---------- game screen ---------- */
+.screen.arc-play{background:var(--ink);animation:fade .2s ease both}
+.arc-stage{position:absolute;inset:0;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+.arc-cv{position:absolute;left:0;top:0;display:block;touch-action:none}
+.arc-hbtn{position:absolute;top:calc(var(--safe-t) + 8px);z-index:4;width:max(36px,9.6%);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;
+  background:rgba(255,255,255,.88);color:var(--ink);box-shadow:0 0 0 .12em rgba(11,18,64,.85),0 .18em 0 rgba(11,18,64,.25)}
+.arc-hbtn::after{content:'';position:absolute;inset:-6px;border-radius:50%}   /* a 48px+ touch target, same look */
+.arc-hbtn svg{width:45%;height:45%}
+.arc-hbtn:active{transform:translateY(.1em)}
+.arc-quit{left:6px}
+.arc-pause{right:6px}
+.arc-layer{position:absolute;inset:0;z-index:10;pointer-events:none}
+.arc-layer > *{pointer-events:auto}
+
+/* ---------- Say-it checkpoint (the card from the videos) ---------- */
+.arc-say{position:relative;width:calc(100% - 1.4em);margin:0 .7em;background:var(--paper);border-radius:1.8em 1.8em 0 0;box-shadow:inset 0 0 0 .22em var(--ink);
+  padding:1.1em 1.2em calc(var(--safe-b) + 1em);display:flex;flex-direction:column;align-items:center;gap:.55em;animation:up .3s cubic-bezier(.3,1.4,.6,1) both;max-height:92%;overflow-y:auto}
+.arc-say-hd{align-self:stretch;display:flex;align-items:center;gap:.7em}
+.arc-say-hd h2{font-size:1.3em;font-weight:800;line-height:1.1}
+.arc-say-hd p{font-family:var(--body);font-size:.88em;font-weight:600;color:var(--ink2)}
+.arc-say-w{text-align:center;margin-top:.2em}
+.arc-say-w b{display:block;font-size:min(3.2em,13vw);font-weight:800;line-height:1.05;letter-spacing:-.01em;overflow-wrap:anywhere}
+.arc-say-w small{display:block;margin-top:.2em;font-size:1.15em;font-weight:700;color:var(--ink2)}
+.arc-tip{padding:.3em .9em;border-radius:1em;background:var(--lime);font-weight:700;font-size:.85em}
+.arc-say-audio{display:flex;gap:.5em}
+.arc-abtn{display:inline-flex;align-items:center;gap:.35em;min-height:40px;padding:.4em .95em;border-radius:1em;background:#fff;box-shadow:inset 0 0 0 .14em var(--line),0 .2em 0 var(--line);font-weight:700;font-size:.85em}
+.arc-abtn svg{width:1.2em;height:1.2em}
+.arc-abtn[disabled]{opacity:.5}
+.arc-say-act{align-self:stretch;display:flex;flex-direction:column;align-items:center;gap:.5em;min-height:6.6em;justify-content:center}
+.arc-mic{position:relative;width:5.2em;height:5.2em;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:#fff;box-shadow:0 .3em 0 rgba(11,18,64,.3)}
+.arc-mic svg{width:2.1em;height:2.1em}
+.arc-mic.live{background:var(--coral)}
+.arc-mic.live::after{content:"";position:absolute;inset:-.5em;border-radius:50%;border:.25em solid rgba(255,107,74,.5);animation:ring 1s ease-out infinite}
+.arc-mic.ok{background:var(--mint-sh)}
+.arc-miclbl{font-weight:800;font-size:1.05em;text-align:center}
+.arc-miclbl.ok{color:#178A5A}
+.arc-say-note{min-height:1.2em;font-family:var(--body);font-weight:600;font-size:.88em;color:var(--ink2);text-align:center;line-height:1.35}
+.arc-link{font-family:var(--body);font-weight:700;font-size:.82em;color:var(--peri-ink);text-decoration:underline;text-underline-offset:.2em;min-height:36px;padding:0 .6em}
+.arc-trainer{display:grid;gap:.6em;width:100%;padding:.85em;border-radius:1em;background:var(--gold-soft)}
+.arc-trainer p{font-size:.85em;color:var(--gold-ink);font-family:var(--body);font-weight:600;line-height:1.35}
+.arc-g2{display:grid;grid-template-columns:1fr 1fr;gap:.6em}
+.arc-g2 .btn{font-size:.8em}
+.arc-taphd{font-weight:700;font-size:.95em}
+.arc-tapopts{display:grid;gap:.45em;width:100%}
+.arc-topt{min-height:44px;padding:.55em .8em;border-radius:.9em;background:#fff;border:.14em solid var(--line);border-bottom-width:.3em;font-weight:700;font-size:1.05em}
+.arc-topt.ok{border-color:var(--lime-sh);background:var(--lime-soft);color:var(--lime-ink)}
+.arc-topt.bad{border-color:var(--coral);background:var(--coral-soft);color:var(--coral-ink)}
+.arc-say-act > .btn{width:100%}
+
+/* ---------- end card ---------- */
+.arc-end{position:relative;width:100%;background:var(--paper);border-radius:1.6em 1.6em 0 0;padding:1.2em 1.2em calc(var(--safe-b) + 1.1em);
+  display:flex;flex-direction:column;gap:.75em;animation:up .28s ease both;max-height:94%;overflow-y:auto}
+.arc-end > *{flex:none}
+/* a long "To remember" list scrolls on its own, so the score and the buttons always stay in view */
+.arc-end > .arc-learn{flex:0 1 auto;min-height:6.6em;overflow-y:auto;overscroll-behavior:contain;padding:.1em 0}
+.arc-learn.more{-webkit-mask-image:linear-gradient(#000 calc(100% - 2.6em),transparent);mask-image:linear-gradient(#000 calc(100% - 2.6em),transparent)}
+.arc-end-hd{display:flex;align-items:center;gap:.8em}
+.arc-end-art{flex:none;display:grid;place-items:center;width:3.6em;height:3.6em;border-radius:1em;background:var(--lime-soft);box-shadow:inset 0 0 0 .14em var(--ink)}
+.arc-end-hd small{font-size:.75em;font-weight:700;color:var(--mute);letter-spacing:.04em}
+.arc-end-hd h2{font-size:1.45em;font-weight:800;line-height:1.1}
+.arc-score{display:flex;align-items:baseline;justify-content:center;gap:.4em;flex-wrap:wrap}
+.arc-score b{font-size:3em;font-weight:800;line-height:1}
+.arc-score span{font-weight:700;color:var(--ink2)}
+.arc-newbest{align-self:center;font-style:normal;padding:.25em .7em;border-radius:1em;background:var(--gold);font-weight:800;font-size:.8em;transform:rotate(-4deg)}
+.arc-counts{display:flex;justify-content:center;gap:1.2em;font-weight:700}
+.arc-counts span{display:inline-flex;align-items:center;gap:.25em}
+.arc-counts svg{width:1.1em;height:1.1em}
+.arc-counts .ok{color:var(--lime-ink)}
+.arc-counts .bad{color:var(--coral-ink)}
+.arc-learn{display:grid;gap:.4em}
+.arc-learn small{font-size:.7em;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--mute)}
+.arc-lrow{display:flex;align-items:center;gap:.6em;padding:.35em .45em;border-radius:2em;background:#fff;box-shadow:inset 0 0 0 .14em var(--ink)}
+.arc-lrow b{flex:none;padding:.25em .8em;border-radius:2em;background:var(--lime);font-weight:800;font-size:.95em}
+.arc-lrow span{font-weight:700;font-size:.88em;line-height:1.2}
+.arc-perfect{text-align:center;font-family:var(--body);font-weight:600;color:var(--lime-ink)}
+.arc-earn{display:flex;justify-content:center;gap:.8em;flex-wrap:wrap}
+.arc-earn > span{display:inline-flex;align-items:center;gap:.35em;padding:.35em .85em;border-radius:1em;font-weight:800}
+.arc-earn-sp{background:var(--coral-soft);color:var(--coral-ink)}
+.arc-earn-xp{background:var(--gold-soft);color:var(--gold-ink)}
+.arc-earn-xp svg{width:1.1em;height:1.1em;color:var(--gold-sh)}
+.arc-capnote{text-align:center;font-family:var(--body);font-size:.82em;font-weight:600;color:var(--mute)}
+.arc-end-btns{display:grid;gap:.65em}
+
+@media (max-height:640px){
+  .arc-hd{padding-top:calc(var(--safe-t) + 3em);padding-bottom:1em}
+  .arc-tile{min-height:9em}
+  .arc-say-w b{font-size:min(2.6em,12vw)}
+  .arc-say-act{min-height:5.6em}
+  .arc-mic{width:4.4em;height:4.4em}
+}
+@media (prefers-reduced-motion:reduce){
+  .arc-pill.wig,.arc-hd-lau .bob,.arc-sheet,.arc-sheet-card,.arc-say,.arc-end,.arc-mic.live::after,.screen.arc-play{animation:none}
+}

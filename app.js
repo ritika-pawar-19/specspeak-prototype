@@ -60,7 +60,8 @@
   function fresh() {
     return { v: 1, name: '', store: '', xp: 0, streak: { n: 0, last: '' }, streakBonus: false, read: false, watch: false, videoMax: 0,
       lessons: { meet: false, match: false, use: false }, said: {}, badge: false, practice: [],
-      today: { date: '', lessons: 0, firstTry: 0 }, lessonsDone: 0, homeTip: false };
+      today: { date: '', lessons: 0, firstTry: 0 }, lessonsDone: 0, homeTip: false,
+      arcade: { sp: 0, b: {}, d: '', x: 0, p: {}, hide: '', w: '' } };     // Play & Learn (arcade/engine.js)
   }
   function upgrade(s) {
     var f = fresh();
@@ -323,6 +324,7 @@
       '<div class="trail">' + nodes + CH('chip', 'buddy') + CH('rami', 'buddy2') + '</div>' +
       '<div class="next-units">' + later + '</div></div>' + tabs('home'), '', back);
     bindTabs(el);
+    if (window.ARC && ARC.homePill) ARC.homePill(el);
     var ex = el.querySelector('[data-exit]'); if (ex) ex.onclick = askExit;
     el.querySelectorAll('[data-go="streak"]').forEach(function (b) { b.onclick = streakScreen; });
     el.querySelectorAll('[data-unit]').forEach(function (b) { b.onclick = function () { toast('Unit ' + b.getAttribute('data-unit') + ' opens after Unit 1 in the pilot.'); }; });
@@ -970,6 +972,7 @@
         '<div class="empty">' + CH('lau_joy') + '<p>Nothing to practise right now. Nice work!</p></div>') +
       '<h2 class="section-t">All Unit 1 words</h2><div class="list">' + D.WORDS.map(function (w) { return row(w, false); }).join('') + '</div></div>' + tabs('practice'), '');
     bindTabs(el);
+    if (window.ARC && ARC.practiceCard) ARC.practiceCard(el);
     el.querySelectorAll('[data-hear]').forEach(function (b) { b.onclick = function () { A.word(D.BY[b.getAttribute('data-hear')]); }; });
     el.querySelectorAll('[data-say]').forEach(function (b) { b.onclick = function () { lesson('practice', [{ t: 'say', slug: b.getAttribute('data-say') }]); }; });
   }
@@ -1017,6 +1020,19 @@
     L.onBeforeFinish(function () { save(true); });
     if (L.loadFailed) setTimeout(function () { toast('Your saved progress couldn\u2019t be read. Your training record has not been changed.'); }, 800);
   }
+  /* Play & Learn (arcade/): a Say-it pass there counts for the unit exactly like the lesson's, minus the lesson XP */
+  function markSaid(slug, method, heard, firstTry, passed) {
+    if (!D.BY[slug]) return;
+    var ok = passed !== false;
+    try { L.active && L.interaction(slug, ok, heard || '', method === 'trainer' ? 'trainer' : 'mic'); } catch (e) {}
+    if (!ok) return;
+    st.said[slug] = true; dropPractice(slug);
+    if (firstTry) { ensureToday(); st.today.firstTry++; }
+    save(true);
+  }
+  if (window.ARC && ARC.init) ARC.init({ state: function () { return st; }, save: save, addXP: addXP, touchStreak: touchStreak,
+    ensureToday: ensureToday, today: today, toast: toast, confirm: confirmBox, markSaid: markSaid,
+    mount: mount, sub: sub, goHome: goHome, home: home, practice: practiceTab, D: D, A: A, S: S, inLMS: inLMS });
   if ('serviceWorker' in navigator && location.protocol === 'https:' && !framed && !L.active && /github\.io$/.test(location.hostname)) {
     window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
   }
