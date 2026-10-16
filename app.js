@@ -21,6 +21,7 @@
     dumbbell: '<path d="M2.5 10h2V8h2.5v8H4.5v-2h-2zm19 0h-2V8H17v8h2.5v-2h2zM8 11h8v2H8z"/>',
     shield: '<path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/>',
     user: '<path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zm-8 9a8 8 0 0 1 16 0z"/>',
+    logout: '<path d="M10 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20H10M15 8l4 4-4 4M19 12H9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
     book: '<path d="M8 2.5h10.5A1.5 1.5 0 0 1 20 4v13h-2V4.5H8z"/><rect x="4" y="6.5" width="12.5" height="15" rx="2"/>',
     play: '<path d="M8 5v14l11-7z"/>',
     bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>',
@@ -96,6 +97,12 @@
     }
     try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {}
   }
+  /* A store phone can be shared: logging out parks this APC's progress under their name,
+     and typing (or tapping) the same name later brings it back. Not used in the LMS. */
+  var ACCTS = 'specspeak.accounts';
+  function nameKey(n) { return (n || '').trim().toLowerCase().replace(/\s+/g, ' '); }
+  function accounts() { try { var a = JSON.parse(localStorage.getItem(ACCTS)); return a && typeof a === 'object' ? a : {}; } catch (e) { return {}; } }
+  function putAccounts(a) { try { localStorage.setItem(ACCTS, JSON.stringify(a)); } catch (e) {} }
   /* local calendar day as a day number, so streaks never shift with time zones */
   function dayNum(d) { d = d || new Date(); return Math.round(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 86400000); }
   function parseDay(s) { var m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s || ''); return m ? dayNum(new Date(+m[1], +m[2] - 1, +m[3])) : null; }
@@ -235,6 +242,9 @@
   }
   function nameScreen(fromProfile) {
     if (fromProfile) sub(function () { profileTab(); });
+    var saved = (fromProfile || inLMS) ? {} : accounts(), savedKeys = Object.keys(saved).filter(function (k) { return saved[k] && saved[k].name; });
+    var savedChips = savedKeys.length ? '<div class="saved"><p>Played on this phone before? Tap your name.</p><div class="schips">' +
+      savedKeys.map(function (k) { return '<button type="button" class="schip" data-saved="' + esc(k) + '">' + esc(saved[k].name) + '</button>'; }).join('') + '</div></div>' : '';
     var el = mount(
       (fromProfile ? '<button class="iconbtn closex" data-x aria-label="Close">' + ic('x') + '</button>' : '') +
       '<div class="eyes">' + CH('bolo') + '</div><h1>' + (fromProfile ? 'Update your details' : 'Ready to learn?') + '</h1>' +
@@ -242,16 +252,30 @@
       '<input class="field" id="nm" name="nm" placeholder="e.g. Priya" maxlength="30" required autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="next" value="' + esc(st.name) + '">' +
       '<label class="flabel" for="sto">Your store (optional)</label>' +
       '<input class="field" id="sto" name="sto" placeholder="e.g. Store 14" maxlength="40" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="go" value="' + esc(st.store) + '">' +
-      '<button class="btn navy" type="submit">' + (fromProfile ? 'Save' : 'Let’s go!') + '</button></form>' +
+      '<button class="btn navy" type="submit">' + (fromProfile ? 'Save' : 'Let’s go!') + '</button></form>' + savedChips +
       '<p class="note">' + (inLMS ? 'Your progress is saved to your training record.' : 'Your progress is saved on this phone only.') + '</p>', 'namescr');
     var x = el.querySelector('[data-x]'); if (x) x.onclick = function () { profileTab(); };
+    el.querySelectorAll('[data-saved]').forEach(function (b) {
+      b.onclick = function () {
+        var r = saved[b.getAttribute('data-saved')];
+        el.querySelector('#nm').value = r.name; el.querySelector('#sto').value = r.store || '';
+        el.querySelector('form').requestSubmit ? el.querySelector('form').requestSubmit() : el.querySelector('[type=submit]').click();
+      };
+    });
     el.querySelector('form').addEventListener('submit', function (e) {
       e.preventDefault();
       var nm = el.querySelector('#nm'), n = nm.value.trim();
       if (!n) { nm.focus(); nm.setAttribute('aria-invalid', 'true'); toast('Please type your name.'); return; }
-      st.name = n; st.store = el.querySelector('#sto').value.trim(); save();
+      var store = el.querySelector('#sto').value.trim(), back = false;
+      if (!fromProfile && !inLMS) {
+        var a = accounts(), k = nameKey(n);
+        if (a[k] && a[k].v === 1) { st = upgrade(a[k]); delete a[k]; putAccounts(a); back = true; }
+      }
+      if (!back) st.name = n;               // a returning APC keeps the name as first saved ("priya" finds "Priya")
+      if (store || !back) st.store = store; save();
       if (fromProfile) return profileTab();
       home();
+      if (back) setTimeout(function () { toast('Welcome back, ' + st.name + '! Your progress is here.'); }, 300);
       // iPhone Safari keeps a separate copy of progress for the Home Screen app, so suggest adding it now
       if (S.isIOS && !navigator.standalone && !st.homeTip) {
         st.homeTip = true; save();
@@ -906,6 +930,21 @@
     el.querySelector('[data-streak]').onclick = streakScreen;
   }
 
+  /* ---------------- logging out (outside the LMS) ---------------- */
+  function askLogOut() {
+    confirmBox({ char: 'bolo', title: 'Log out, ' + esc(st.name) + '?', text: 'Your progress stays saved on this phone. Next time, type your name or tap it to carry on.',
+      ok: 'Log out', okCls: '', cancel: 'Stay', onOk: logOut });
+  }
+  function logOut() {
+    var n = st.name, a = accounts();
+    a[nameKey(n)] = st; putAccounts(a);
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    A.stop(); S.cancel();
+    st = fresh(); st.homeTip = true;
+    welcome();
+    toast('Logged out. See you soon, ' + n + '!');
+  }
+
   /* ---------------- leaving the LMS session ---------------- */
   function askExit() {
     confirmBox({ char: 'bolo', title: 'Save and exit?', text: 'Your progress is saved to your training record. Come back any time to carry on.',
@@ -957,6 +996,7 @@
       (L.active ? 'Progress is saved to your training record.' : 'Progress is saved on this phone only.') + '</p></div>' +
       (L.active ? '<button class="btn" data-exit>Save and exit</button>' : '') +
       (!L.active || !L.learnerName() ? '<button class="btn ghost" data-edit>Change name or store</button>' : '') +
+      (inLMS ? '' : '<button class="btn" data-logout>' + ic('logout') + 'Log out</button>') +
       (inLMS ? '' : '<button class="btn ghost" data-reset style="color:var(--coral-ink)">Reset progress</button>') +
       '</div></div>' + tabs('profile'), '');
     bindTabs(el);
@@ -964,6 +1004,7 @@
     el.querySelector('[data-sound]').onclick = function () { A.setMuted(!A.muted); profileTab(); };
     var ed = el.querySelector('[data-edit]'); if (ed) ed.onclick = function () { nameScreen(true); };
     var ex2 = el.querySelector('[data-exit]'); if (ex2) ex2.onclick = askExit;
+    var lo = el.querySelector('[data-logout]'); if (lo) lo.onclick = askLogOut;
     var rs = el.querySelector('[data-reset]'); if (rs) rs.onclick = function () {
       confirmBox({ title: 'Reset all progress?', text: 'XP, streak and every level go back to the start. This can’t be undone.', ok: 'Reset', cancel: 'Cancel',
         onOk: function () { var n = st.name, s = st.store; st = fresh(); st.name = n; st.store = s; st.homeTip = true; save(); home(); toast('Progress reset.'); } });

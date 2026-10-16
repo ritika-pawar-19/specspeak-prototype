@@ -310,6 +310,11 @@ h1.unit{font-size:1em}
 .field{display:block;width:100%;border:0;border-radius:1em;background:#A6D610;padding:1em 1.1em;font-size:16px;color:var(--ink);font-weight:600}
 .field::placeholder{color:#3A5200;opacity:.8}
 .namescr .note{text-align:center;font-size:.8em;color:#4F6B00;font-family:var(--body);padding:.6em 1.6em}
+.namescr .saved{padding:.9em 1.6em 0;text-align:center}
+.namescr .saved p{font-size:.8em;font-weight:700;color:#3A5200;margin:0 0 .55em}
+.namescr .schips{display:flex;flex-wrap:wrap;gap:.5em;justify-content:center}
+.namescr .schip{border:0;border-radius:999px;background:var(--ink);color:#fff;font:inherit;font-weight:700;font-size:.9em;padding:.55em 1.1em;min-height:2.6em;cursor:pointer}
+.namescr .schip:active{transform:translateY(1px)}
 
 /* simple pages: practice, league, profile */
 .page-h{padding:calc(var(--safe-t) + 16px) 1.15em .4em}
