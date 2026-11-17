@@ -1,5 +1,5 @@
 /* Offline cache for the SpecSpeak prototype: network first, cache as fallback. */
-const CACHE = 'specspeak-v5';
+const CACHE = 'specspeak-v6';
 const WORDS = ['acer', 'aspire', 'processor', 'generation', 'ram', 'gigabyte', 'ssd', 'storage', 'display', 'warranty'];
 const AUDIO = WORDS.flatMap(w => ['assets/audio/' + w + '.mp3', 'assets/audio/' + w + '-slow.mp3'])
   .concat(['correct', 'wrong', 'complete', 'silence'].map(n => 'assets/audio/' + n + '.mp3'));
@@ -15,5 +15,5 @@ self.addEventListener('fetch', e => {
   e.respondWith(fetch(req).then(res => {
     if (res.ok && new URL(req.url).origin === location.origin) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
     return res;
-  }).catch(() => caches.match(req)));
+  }).catch(() => caches.match(req).then(r => r || caches.match(req, { ignoreSearch: true }))));   // play.html asks for app.js?v=…
 });

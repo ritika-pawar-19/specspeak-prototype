@@ -6,6 +6,7 @@
   var ARC = window.ARC = window.ARC || {};
   var C = PX.C;
   var host = null;
+  var PLAYONLY = false;   // play.html (host.play): no map, lessons, XP or streak to point at
   var games = {};
   var STEP = 1 / 60, XP_CAP = 40, XP_RUN = 10;
 
@@ -165,6 +166,7 @@
   /* ---------------- init, home pill, practice card ---------------- */
   ARC.init = function (h) {
     host = h;
+    PLAYONLY = ARC.playOnly = !!h.play;
     try { AR(); } catch (e) {}
     var m = /[?&]arcade=(g\d\d|hub)\b/.exec(location.search);
     if (m) setTimeout(function () {
@@ -230,7 +232,7 @@
       '<span class="arc-chip" aria-label="' + a.sp + ' sparks"><span class="arc-chip-em"></span>' + a.sp + '</span>' +
       '<span class="arc-hd-lau"></span><h1>Play &amp; Learn</h1><p>Pick a game</p></div>' +
       '<div class="scroll arc-hub-scroll"><div class="arc-grid">' + tiles + '</div>' +
-      '<p class="arc-note">Every game teaches the Unit 1 words. Up to ' + XP_CAP + ' XP a day; lessons stay the main way to earn.</p></div>', 'arc-hub', back);
+      '<p class="arc-note">Every game teaches the Unit 1 words.' + (PLAYONLY ? '' : ' Up to ' + XP_CAP + ' XP a day; lessons stay the main way to earn.') + '</p></div>', 'arc-hub', back);
     hubEl = el;
     putSprite(el, '.arc-hd-lau', PX.lau({ h: 27, form: 'super', mood: 'joy', look: [-0.5, 0.5] }), 2.5, 'bob');
     putSprite(el, '.arc-hd .arc-chip-em', PX.ember(), 2);
@@ -274,10 +276,11 @@
       '<ol class="arc-rules">' + rules.map(function (r, i) { return '<li><span>' + (i + 1) + '</span>' + esc(r) + '</li>'; }).join('') + '</ol>' +
       '<button class="btn" data-arc-play>' + ICON.play + 'Play</button></div>';
     hubEl.appendChild(sh);
+    host.sub(hubBack);                     // play.html: the open sheet owns a history entry, so phone Back closes it (index.html: no change)
     var spr = def.icon ? def.icon() : m.icon();
     putSprite(sh, '.arc-intro-art', spr, (def.iconScale || m.sc) * .8);
-    sh.addEventListener('click', function (e) { if (e.target === sh) sh.remove(); });
-    sh.querySelector('[data-arc-x]').onclick = function () { sh.remove(); };
+    sh.addEventListener('click', function (e) { if (e.target === sh) { sh.remove(); host.sub(hubBack); } });
+    sh.querySelector('[data-arc-x]').onclick = function () { sh.remove(); host.sub(hubBack); };
     arm(sh.querySelector('[data-arc-play]'), function () { ARC.open(id); });
     try { sh.querySelector('[data-arc-play]').focus({ preventScroll: true }); } catch (e) {}
   }
@@ -743,7 +746,7 @@
       }
       function notClear(lead) {
         tapLink.hidden = true;
-        note.innerHTML = lead + ' Not clear yet. Hear it slowly once more; you can try it again in the Say-it lesson.';
+        note.innerHTML = lead + (PLAYONLY ? ' Not clear yet. Hear it slowly once more.' : ' Not clear yet. Hear it slowly once more; you can try it again in the Say-it lesson.');
         act.innerHTML = '<button class="btn" data-arc-cont>Keep playing</button>';
         A.word(w, true);
         arm(act.querySelector('[data-arc-cont]'), function () { finish({ passed: false, method: trainerHere || S.mode() === 'trainer' ? 'trainer' : 'mic', firstTry: false, heard: '' }); });
@@ -828,8 +831,8 @@
       '<div class="arc-counts"><span class="ok">' + ICON.check + r.right + ' right</span><span class="bad">' + ICON.x + r.wrong + ' wrong</span></div>' +
       (miss.length ? '<div class="arc-learn"><small>To remember</small>' + miss.map(function (m) { return '<div class="arc-lrow"><b>' + esc(m.word) + '</b><span>' + esc(m.right) + '</span></div>'; }).join('') + '</div>' :
         (r.right ? '<p class="arc-perfect">No misses. Every word landed.</p>' : '')) +
-      '<div class="arc-earn"><span class="arc-earn-sp"><span class="arc-chip-em"></span>+' + r.sparks + ' sparks</span><span class="arc-earn-xp">' + ICON.bolt + '+' + r.xp + ' XP</span></div>' +
-      (r.capped && !r.xp ? '<p class="arc-capnote">Today’s Play &amp; Learn XP is used up. Sparks still count.</p>' :
+      '<div class="arc-earn"><span class="arc-earn-sp"><span class="arc-chip-em"></span>+' + r.sparks + ' sparks</span>' + (PLAYONLY ? '' : '<span class="arc-earn-xp">' + ICON.bolt + '+' + r.xp + ' XP</span>') + '</div>' +
+      (PLAYONLY ? '' : r.capped && !r.xp ? '<p class="arc-capnote">Today’s Play &amp; Learn XP is used up. Sparks still count.</p>' :
         r.unpaid ? '<p class="arc-capnote">' + unpaidNote + '</p>' :
         r.streak ? '<p class="arc-capnote">Today’s practice counts for your streak.</p>' : '') +
       '<div class="arc-end-btns"><button class="btn" data-arc-again>Play again</button><button class="btn ghost" data-arc-games>Back to games</button></div></div>';

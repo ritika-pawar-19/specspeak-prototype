@@ -8,6 +8,7 @@
   /* play.html sets window.SS_PLAY: Play & Learn only. It opens straight on the games, never shows the map or the
      sign-in, and keeps its own progress (its own storage key), so it never changes the main app's progress. */
   var PLAY = !!window.SS_PLAY && !inLMS;
+  if (PLAY) document.documentElement.classList.add('ss-play');   // play.html's CSS (no Back on the games list) applies only in this mode
   var app = document.getElementById('app');
   var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
@@ -293,13 +294,18 @@
   var NODE_SUB = { read: 'TrainGram cards', watch: 'Training video', meet: 'New words', match: '&amp; listen', use: 'With customers', say: 'Checkpoint', badge: 'Unit 1' };
   var NODE_ICON = { read: 'book', watch: 'play', meet: 'star', match: 'star', use: 'star', say: 'mic', badge: 'trophy' };
 
+  function playFailed() {                 // play.html when the game files did not load (a dropped connection)
+    var el = mount('<div class="gb fin"><div class="cheer">' + CH('bolo_worried') + '</div><h1 class="fin-h" style="color:var(--ink)">Couldn\u2019t load the games</h1>' +
+      '<p class="fin-s">Check your connection and try again.</p><button class="btn navy" data-reload>Try again</button></div>', '');
+    el.querySelector('[data-reload]').onclick = function () { location.reload(); };
+  }
   function noLMS() {
     mount('<div class="gb fin"><div class="cheer">' + CH('bolo_worried') + '</div><h1 class="fin-h" style="color:var(--ink)">' +
       (L.ended ? 'This session has ended' : 'Can\u2019t reach your training record') + '</h1>' +
       '<p class="fin-s">Close SpecSpeak and open it again from TrainGram, so your progress is saved.</p></div>', '');
   }
   function home(back) {
-    if (PLAY && window.ARC && ARC.menu) return ARC.menu('home');     // play.html: the games list is the home screen
+    if (PLAY) return window.ARC && ARC.menu ? ARC.menu('home') : playFailed();   // play.html: the games list is the home screen, never the map
     if (inLMS && !L.active) return noLMS();
     if (!st.name) return welcome();
     leaveSub();
@@ -1035,8 +1041,8 @@
     save(true);
   }
   /* play.html: the games list is the root screen, so it owns no history entry (the phone's Back leaves the page from
-     there); a game still owns one, so Back in a game asks to quit and returns to the list */
-  function playSub(fn) { if (app.querySelector('.screen.arc-hub')) { leaveSub(); return; } sub(fn); }
+     there); an open intro sheet and a game each own one, so Back closes the sheet, or asks to quit the game */
+  function playSub(fn) { var h = app.querySelector('.screen.arc-hub'); if (h && !h.querySelector('.arc-sheet')) { leaveSub(); return; } sub(fn); }
   if (window.ARC && ARC.init) ARC.init({ state: function () { return st; }, save: save, addXP: addXP, touchStreak: touchStreak,
     ensureToday: ensureToday, today: today, toast: toast, confirm: confirmBox, markSaid: markSaid,
     mount: mount, sub: PLAY ? playSub : sub, goHome: goHome, home: home, practice: PLAY ? home : practiceTab, D: D, A: A, S: S, inLMS: inLMS, play: PLAY });

@@ -636,7 +636,7 @@
     R.miss(item.slug, 'Say ' + w.say); remember(R, item.slug, 'Say ' + w.say, 1);
     R.after(.15, function () { if (s.tok === tok) R.sfx('bump'); });
     if (!item.ret) { item.ret = 1; s.queue.push(item); note(R, 'Not clear yet. ' + w.word + ' comes back', 2); }
-    else note(R, 'Not clear yet. Practise ' + w.word + ' in the Say-it lesson', 2.2);
+    else note(R, 'Not clear yet. Practise ' + w.word + (ARC.playOnly ? '' : ' in the Say-it lesson'), 2.2);
     R.after(2.4, function () { if (s.tok === tok && !R.over) nextPhase(R); });
   }
   function nextPhase(R) {

@@ -106,7 +106,7 @@
       return (SR && window.isSecureContext) ? 'auto' : 'trainer';
     },
     why: function () {
-      if (forcedTrainer) return 'Trainer check is switched on in Profile.';
+      if (forcedTrainer) return window.SS_PLAY ? 'Trainer check is switched on.' : 'Trainer check is switched on in Profile.';   // play.html has no Profile
       if (inLMS && (denied || !SR || !window.isSecureContext)) return denied === 'unavailable' ?
         'Speech check isn\u2019t working on this connection. Your trainer can check your words.' :
         'The microphone isn\u2019t available in this training window. Your trainer can check your words.';

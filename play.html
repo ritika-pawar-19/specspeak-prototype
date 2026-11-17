@@ -9,7 +9,7 @@
 <meta name="color-scheme" content="only light">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="SpecSpeak">
+<meta name="apple-mobile-web-app-title" content="SpecSpeak Play">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="arcade/arcade.css">
 <!-- play.html: the games list is the first screen, so it has no Back button -->
-<style>.arc-hub [data-arc-back]{visibility:hidden}</style>
+<style>.ss-play .arc-hub [data-arc-back]{visibility:hidden}</style>
 </head>
 <body>
 <div id="app" class="app"></div>
@@ -28,18 +28,18 @@
 <script src="chars.js"></script>
 <script src="data.js"></script>
 <script src="lms.js"></script>
-<script src="speech.js"></script>
+<script src="speech.js?v=play3"></script>
 <script src="arcade/kit.js"></script>
 <script src="arcade/content.js"></script>
-<script src="arcade/engine.js"></script>
+<script src="arcade/engine.js?v=play3"></script>
 <script src="arcade/games/g18_superlau.js"></script>
 <script src="arcade/games/g19_blockbump.js"></script>
-<script src="arcade/games/g20_lagking.js"></script>
+<script src="arcade/games/g20_lagking.js?v=play3"></script>
 <script src="arcade/games/g21_specstack.js"></script>
 <script src="arcade/games/g22_laujump.js"></script>
 <script src="arcade/games/g23_echoinvaders.js"></script>
 <script>window.SS_PLAY = true;   /* Play & Learn only: see the top of app.js */</script>
 <!-- ?v=… makes phones fetch the app.js that knows SS_PLAY, never an older copy kept in the browser cache -->
-<script src="app.js?v=play2"></script>
+<script src="app.js?v=play3"></script>
 </body>
 </html>
