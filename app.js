@@ -5,6 +5,9 @@
   var D = window.SS, A = window.SSAudio, S = window.SSSpeech, CH = window.CH;
   var L = window.SSLMS || { active: false, expected: false };   // SCORM LMS when launched from TrainGram's LMS
   var inLMS = !!(L.active || L.expected);       // inside a SCORM package: progress never touches this phone's storage
+  /* play.html sets window.SS_PLAY: Play & Learn only. It opens straight on the games, never shows the map or the
+     sign-in, and keeps its own progress (its own storage key), so it never changes the main app's progress. */
+  var PLAY = !!window.SS_PLAY && !inLMS;
   var app = document.getElementById('app');
   var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
@@ -56,7 +59,7 @@
   }
 
   /* ---------------- state ---------------- */
-  var KEY = 'specspeak.v1';
+  var KEY = PLAY ? 'specspeak.play.v1' : 'specspeak.v1';
   function fresh() {
     return { v: 1, name: '', store: '', xp: 0, streak: { n: 0, last: '' }, streakBonus: false, read: false, watch: false, videoMax: 0,
       lessons: { meet: false, match: false, use: false }, said: {}, badge: false, practice: [],
@@ -296,6 +299,7 @@
       '<p class="fin-s">Close SpecSpeak and open it again from TrainGram, so your progress is saved.</p></div>', '');
   }
   function home(back) {
+    if (PLAY && window.ARC && ARC.menu) return ARC.menu('home');     // play.html: the games list is the home screen
     if (inLMS && !L.active) return noLMS();
     if (!st.name) return welcome();
     leaveSub();
@@ -1030,9 +1034,12 @@
     if (firstTry) { ensureToday(); st.today.firstTry++; }
     save(true);
   }
+  /* play.html: the games list is the root screen, so it owns no history entry (the phone's Back leaves the page from
+     there); a game still owns one, so Back in a game asks to quit and returns to the list */
+  function playSub(fn) { if (app.querySelector('.screen.arc-hub')) { leaveSub(); return; } sub(fn); }
   if (window.ARC && ARC.init) ARC.init({ state: function () { return st; }, save: save, addXP: addXP, touchStreak: touchStreak,
     ensureToday: ensureToday, today: today, toast: toast, confirm: confirmBox, markSaid: markSaid,
-    mount: mount, sub: sub, goHome: goHome, home: home, practice: practiceTab, D: D, A: A, S: S, inLMS: inLMS });
+    mount: mount, sub: PLAY ? playSub : sub, goHome: goHome, home: home, practice: PLAY ? home : practiceTab, D: D, A: A, S: S, inLMS: inLMS, play: PLAY });
   if ('serviceWorker' in navigator && location.protocol === 'https:' && !framed && !L.active && /github\.io$/.test(location.hostname)) {
     window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
   }
